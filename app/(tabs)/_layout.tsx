@@ -1,15 +1,61 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
 /**
  * Layout de pestañas: Biblioteca, Ruta y Perfil.
- * TODO (Integrante 2 - Marvin): añadir iconos y estilos.
+ * Cada pestaña recibe un icono de Ionicons que cambia entre
+ * variante rellena (activa) y outline (inactiva), patrón
+ * estándar en apps móviles.
+ *
+ * TODO (Integrante 2 - Marvin): refinar estilos si hace falta.
  */
 export default function LayoutTabs() {
   return (
-    <Tabs>
-      <Tabs.Screen name="index" options={{ title: 'Biblioteca' }} />
-      <Tabs.Screen name="ruta" options={{ title: 'Ruta' }} />
-      <Tabs.Screen name="perfil" options={{ title: 'Perfil' }} />
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: '#2563eb',
+        tabBarInactiveTintColor: '#6b7280',
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Biblioteca',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'book' : 'book-outline'}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ruta"
+        options={{
+          title: 'Ruta',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'map' : 'map-outline'}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="perfil"
+        options={{
+          title: 'Perfil',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? 'person' : 'person-outline'}
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
