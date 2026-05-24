@@ -144,28 +144,20 @@ async function sembrarDatosIniciales(
     },
   ];
 
-  // Se prepara la sentencia una sola vez y se ejecuta por cada
-  // libro semilla; es la forma recomendada por expo-sqlite para
-  // inserciones repetidas porque evita re-parsear el SQL.
-  const sentencia = await baseDatos.prepareAsync(
-    `INSERT INTO libros (titulo, autor, tecnologia, nivel, estado, notas, orden)
-     VALUES ($titulo, $autor, $tecnologia, $nivel, $estado, $notas, $orden);`,
-  );
-
-  try {
-    for (const libro of librosSemilla) {
-      await sentencia.executeAsync({
-        $titulo: libro.titulo,
-        $autor: libro.autor,
-        $tecnologia: libro.tecnologia,
-        $nivel: libro.nivel,
-        $estado: libro.estado,
-        $notas: libro.notas,
-        $orden: libro.orden,
-      });
-    }
-  } finally {
-    await sentencia.finalizeAsync();
+  for (const libro of librosSemilla) {
+    await baseDatos.runAsync(
+      `INSERT INTO libros (titulo, autor, tecnologia, nivel, estado, notas, orden)
+       VALUES (?, ?, ?, ?, ?, ?, ?);`,
+      [
+        libro.titulo,
+        libro.autor,
+        libro.tecnologia,
+        libro.nivel,
+        libro.estado,
+        libro.notas,
+        libro.orden,
+      ],
+    );
   }
 }
 
