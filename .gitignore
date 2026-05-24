@@ -39,3 +39,13 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# AI & Editor files/folders
+.claude/
+.gemini/
+.cursor/
+.cursorrules
+.idea/
+.vscode/
+CLAUDE.md
+AGENTS.md
