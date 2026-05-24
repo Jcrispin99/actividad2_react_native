@@ -49,11 +49,16 @@ export function useLibros(): UsoLibros {
    * correcta sin necesidad de reordenar en el cliente.
    */
   const obtenerLibros = useCallback(async (): Promise<void> => {
-    const baseDatos = await obtenerConexion();
+    try {
+      const baseDatos = await obtenerConexion();
       const filas = await baseDatos.getAllAsync<Libro>(
         'SELECT id, titulo, autor, tecnologia, nivel, estado, notas, orden, categoriaRuta FROM libros ORDER BY orden ASC, id ASC;',
       );
-    setLibros(filas.map(mapearFilaALibro));
+      setLibros(filas.map(mapearFilaALibro));
+    } catch (e) {
+      console.error('Error en obtenerLibros:', e);
+      setError(e instanceof Error ? e.message : String(e));
+    }
   }, []);
 
   /**
