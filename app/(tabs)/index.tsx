@@ -12,6 +12,7 @@ import { useFocusEffect } from 'expo-router';
 import { router } from 'expo-router';
 
 import { useLibros } from '../../hooks/useLibros';
+import LibroCard from '../../components/LibroCard';
 
 /**
  * Pantalla Biblioteca.
@@ -81,30 +82,7 @@ export default function PantallaBiblioteca() {
         contentContainerStyle={estilos.lista}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <TouchableOpacity
-            style={estilos.tarjeta}
-            onPress={() => abrirLibro(item.id)}
-          >
-            <Text style={estilos.tituloLibro}>
-              {item.titulo}
-            </Text>
-
-            <Text style={estilos.textoSecundario}>
-              Autor: {item.autor}
-            </Text>
-
-            <Text style={estilos.textoSecundario}>
-              Tecnología: {item.tecnologia}
-            </Text>
-
-            <Text style={estilos.textoSecundario}>
-              Nivel: {item.nivel}
-            </Text>
-
-            <Text style={estilos.estado}>
-              Estado: {item.estado}
-            </Text>
-          </TouchableOpacity>
+          <LibroCard libro={item} onPress={() => abrirLibro(item.id)} />
         )}
         ListEmptyComponent={
           <View style={estilos.centrado}>
@@ -158,27 +136,4 @@ const estilos = StyleSheet.create({
   lista: {
     padding: 16,
   },
-
-  tarjeta: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 14,
-  },
-
-  tituloLibro: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-
-  textoSecundario: {
-    fontSize: 15,
-    marginBottom: 4,
-  },
-
-  estado: {
-    marginTop: 8,
-    fontWeight: '600',
-  },
-});
+});
