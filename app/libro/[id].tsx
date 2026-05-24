@@ -15,6 +15,7 @@ import { useLibros } from '../../hooks/useLibros';
 import type {
   EstadoLibro,
   NivelLibro,
+  CategoriaRuta,
 } from '../../db/database';
 
 /**
@@ -41,6 +42,9 @@ export default function PantallaEditarLibro() {
   const [estado, setEstado] =
     useState<EstadoLibro>('pendiente');
 
+  const [categoriaRuta, setCategoriaRuta] =
+    useState<CategoriaRuta>('General');
+
   const [notas, setNotas] = useState('');
   const [orden, setOrden] = useState('');
  
@@ -52,6 +56,10 @@ export default function PantallaEditarLibro() {
   useEffect(() => {
     const cargarLibro = async () => {
       try {
+        if (!id || isNaN(Number(id))) {
+          return;
+        }
+
         const libro = await obtenerLibroPorId(
           Number(id),
         );
@@ -71,6 +79,7 @@ export default function PantallaEditarLibro() {
         setTecnologia(libro.tecnologia);
         setNivel(libro.nivel);
         setEstado(libro.estado);
+        setCategoriaRuta(libro.categoriaRuta);
         setNotas(libro.notas);
         setOrden(String(libro.orden));
       } catch (error) {
@@ -120,6 +129,15 @@ export default function PantallaEditarLibro() {
         return;
       }
 
+      const categoriasValidas: CategoriaRuta[] = ['Frontend', 'Backend', 'Mobile', 'Data Science', 'General'];
+      if (!categoriasValidas.includes(categoriaRuta)) {
+        Alert.alert(
+          'Valor de Categoría inválido',
+          `Categoría debe ser uno de: ${categoriasValidas.join(', ')}`,
+        );
+        return;
+      }
+
       await actualizarLibro(Number(id), {
         titulo,
         autor,
@@ -128,6 +146,7 @@ export default function PantallaEditarLibro() {
         estado,
         notas,
         orden: Number(orden) || 0,
+        categoriaRuta,
       });
 
       Alert.alert(
@@ -241,6 +260,18 @@ export default function PantallaEditarLibro() {
           value={estado}
           onChangeText={(texto) =>
             setEstado(texto as EstadoLibro)
+          }
+        />
+      </View>
+
+      <View style={estilos.grupoCampo}>
+        <Text style={estilos.label}>Ruta de Aprendizaje (Categoría)</Text>
+
+        <TextInput
+          style={estilos.input}
+          value={categoriaRuta}
+          onChangeText={(texto) =>
+            setCategoriaRuta(texto as CategoriaRuta)
           }
         />
       </View>

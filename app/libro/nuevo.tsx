@@ -15,6 +15,7 @@ import { useLibros } from '../../hooks/useLibros';
 import type {
   EstadoLibro,
   NivelLibro,
+  CategoriaRuta,
 } from '../../db/database';
 
 /**
@@ -34,6 +35,9 @@ export default function PantallaNuevoLibro() {
 
   const [estado, setEstado] =
     useState<EstadoLibro>('pendiente');
+
+  const [categoriaRuta, setCategoriaRuta] =
+    useState<CategoriaRuta>('General');
 
   const [notas, setNotas] = useState('');
   const [orden, setOrden] = useState('');
@@ -73,6 +77,15 @@ export default function PantallaNuevoLibro() {
         return;
       }
 
+      const categoriasValidas: CategoriaRuta[] = ['Frontend', 'Backend', 'Mobile', 'Data Science', 'General'];
+      if (!categoriasValidas.includes(categoriaRuta)) {
+        Alert.alert(
+          'Valor de Categoría inválido',
+          `Categoría debe ser uno de: ${categoriasValidas.join(', ')}`,
+        );
+        return;
+      }
+
       await crearLibro({
         titulo,
         autor,
@@ -81,6 +94,7 @@ export default function PantallaNuevoLibro() {
         estado,
         notas,
         orden: Number(orden) || 0,
+        categoriaRuta,
       });
 
       Alert.alert(
@@ -106,6 +120,7 @@ export default function PantallaNuevoLibro() {
     setTecnologia('General');
     setNivel('intermedio');
     setEstado('pendiente');
+    setCategoriaRuta('Backend');
     setNotas('Libro de referencia sobre buenas prácticas de programación.');
     setOrden('1');
   };
@@ -118,6 +133,7 @@ export default function PantallaNuevoLibro() {
         tecnologia: ['React', 'Node', 'TypeScript'][i % 3],
         nivel: (['basico', 'intermedio', 'avanzado'][i % 3] as NivelLibro),
         estado: (['pendiente', 'leyendo', 'completado'][i % 3] as EstadoLibro),
+        categoriaRuta: (['Frontend', 'Backend', 'Mobile', 'Data Science', 'General'][i % 5] as CategoriaRuta),
         notas: `Notas de ejemplo para el libro ${i + 1}`,
         orden: i + 1,
       }));
@@ -196,6 +212,19 @@ export default function PantallaNuevoLibro() {
           value={estado}
           onChangeText={(texto) =>
             setEstado(texto as EstadoLibro)
+          }
+        />
+      </View>
+
+      <View style={estilos.grupoCampo}>
+        <Text style={estilos.label}>Ruta de Aprendizaje (Categoría)</Text>
+
+        <TextInput
+          style={estilos.input}
+          placeholder="Frontend | Backend | Mobile | Data Science | General"
+          value={categoriaRuta}
+          onChangeText={(texto) =>
+            setCategoriaRuta(texto as CategoriaRuta)
           }
         />
       </View>

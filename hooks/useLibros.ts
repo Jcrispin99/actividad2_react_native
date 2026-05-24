@@ -50,9 +50,9 @@ export function useLibros(): UsoLibros {
    */
   const obtenerLibros = useCallback(async (): Promise<void> => {
     const baseDatos = await obtenerConexion();
-    const filas = await baseDatos.getAllAsync<Libro>(
-      'SELECT id, titulo, autor, tecnologia, nivel, estado, notas, orden FROM libros ORDER BY orden ASC, id ASC;',
-    );
+      const filas = await baseDatos.getAllAsync<Libro>(
+        'SELECT id, titulo, autor, tecnologia, nivel, estado, notas, orden, categoriaRuta FROM libros ORDER BY orden ASC, id ASC;',
+      );
     setLibros(filas.map(mapearFilaALibro));
   }, []);
 
@@ -65,17 +65,18 @@ export function useLibros(): UsoLibros {
     async (datos: LibroNuevo): Promise<number> => {
       const baseDatos = await obtenerConexion();
       const resultado = await baseDatos.runAsync(
-        `INSERT INTO libros (titulo, autor, tecnologia, nivel, estado, notas, orden)
-         VALUES (?, ?, ?, ?, ?, ?, ?);`,
-        [
-          datos.titulo,
-          datos.autor,
-          datos.tecnologia,
-          datos.nivel,
-          datos.estado,
-          datos.notas,
-          datos.orden,
-        ],
+        `INSERT INTO libros (titulo, autor, tecnologia, nivel, estado, notas, orden, categoriaRuta)
+         VALUES ($titulo, $autor, $tecnologia, $nivel, $estado, $notas, $orden, $categoriaRuta);`,
+        {
+          $titulo: datos.titulo,
+          $autor: datos.autor,
+          $tecnologia: datos.tecnologia,
+          $nivel: datos.nivel,
+          $estado: datos.estado,
+          $notas: datos.notas,
+          $orden: datos.orden,
+          $categoriaRuta: datos.categoriaRuta,
+        },
       );
       await obtenerLibros();
       return resultado.lastInsertRowId;
@@ -94,18 +95,19 @@ export function useLibros(): UsoLibros {
       const baseDatos = await obtenerConexion();
       await baseDatos.runAsync(
         `UPDATE libros
-         SET titulo = ?, autor = ?, tecnologia = ?, nivel = ?, estado = ?, notas = ?, orden = ?
-         WHERE id = ?;`,
-        [
-          datos.titulo,
-          datos.autor,
-          datos.tecnologia,
-          datos.nivel,
-          datos.estado,
-          datos.notas,
-          datos.orden,
-          id,
-        ],
+         SET titulo = $titulo, autor = $autor, tecnologia = $tecnologia, nivel = $nivel, estado = $estado, notas = $notas, orden = $orden, categoriaRuta = $categoriaRuta
+         WHERE id = $id;`,
+        {
+          $titulo: datos.titulo,
+          $autor: datos.autor,
+          $tecnologia: datos.tecnologia,
+          $nivel: datos.nivel,
+          $estado: datos.estado,
+          $notas: datos.notas,
+          $orden: datos.orden,
+          $categoriaRuta: datos.categoriaRuta,
+          $id: id,
+        },
       );
       await obtenerLibros();
     },
@@ -120,7 +122,7 @@ export function useLibros(): UsoLibros {
   const eliminarLibro = useCallback(
     async (id: number): Promise<void> => {
       const baseDatos = await obtenerConexion();
-      await baseDatos.runAsync('DELETE FROM libros WHERE id = ?;', [id]);
+      await baseDatos.runAsync('DELETE FROM libros WHERE id = $id;', { $id: id });
       await obtenerLibros();
     },
     [obtenerLibros],
@@ -135,8 +137,8 @@ export function useLibros(): UsoLibros {
     async (id: number): Promise<Libro | null> => {
       const baseDatos = await obtenerConexion();
       const fila = await baseDatos.getFirstAsync<Libro>(
-        'SELECT id, titulo, autor, tecnologia, nivel, estado, notas, orden FROM libros WHERE id = ?;',
-        [id],
+        'SELECT id, titulo, autor, tecnologia, nivel, estado, notas, orden, categoriaRuta FROM libros WHERE id = $id;',
+        { $id: id },
       );
       return fila ? mapearFilaALibro(fila) : null;
     },

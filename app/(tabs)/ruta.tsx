@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo } from 'react';
+import { ActivityIndicator, SectionList, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 
 import { useLibros } from '../../hooks/useLibros';
@@ -17,6 +17,20 @@ export default function PantallaRuta() {
   const abrirLibro = (id: number) => {
     router.push(`/libro/${id}`);
   };
+
+  const rutasAgrupadas = useMemo(() => {
+    const grupos: Record<string, typeof libros> = {};
+    libros.forEach(libro => {
+      const categoria = libro.categoriaRuta || 'General';
+      if (!grupos[categoria]) grupos[categoria] = [];
+      grupos[categoria].push(libro);
+    });
+
+    return Object.keys(grupos).map(key => ({
+      title: `Ruta de ${key}`,
+      data: grupos[key].sort((a, b) => a.orden - b.orden)
+    }));
+  }, [libros]);
 
   if (cargando) {
     return (
@@ -41,18 +55,23 @@ export default function PantallaRuta() {
         <Text style={estilos.subtitulo}>Sigue tu camino paso a paso</Text>
       </View>
 
-      <FlatList
-        data={libros}
-        keyExtractor={(libro) => String(libro.id)}
+      <SectionList
+        sections={rutasAgrupadas}
+        keyExtractor={(item) => String(item.id)}
         contentContainerStyle={estilos.lista}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => (
+        renderSectionHeader={({ section: { title } }) => (
+          <View style={estilos.headerSeccion}>
+            <Text style={estilos.textoHeaderSeccion}>{title}</Text>
+          </View>
+        )}
+        renderItem={({ item, index, section }) => (
           <View style={estilos.itemRuta}>
             <View style={estilos.timelineContainer}>
               <View style={estilos.circuloOrden}>
                 <Text style={estilos.textoOrden}>{item.orden}</Text>
               </View>
-              {index !== libros.length - 1 && <View style={estilos.lineaConectora} />}
+              {index !== section.data.length - 1 && <View style={estilos.lineaConectora} />}
             </View>
 
             <View style={estilos.tarjetaContainer}>
@@ -62,7 +81,7 @@ export default function PantallaRuta() {
         )}
         ListEmptyComponent={
           <View style={estilos.centrado}>
-            <Text>No hay libros en tu ruta. Añade algunos desde la biblioteca.</Text>
+            <Text>No hay rutas disponibles. Añade libros desde crear libro.</Text>
           </View>
         }
       />
@@ -137,5 +156,18 @@ const estilos = StyleSheet.create({
   },
   tarjetaContainer: {
     flex: 1,
+  },
+  headerSeccion: {
+    backgroundColor: '#1f2937', // Un azul/gris oscuro tipo Platzi
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  textoHeaderSeccion: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

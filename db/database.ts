@@ -13,6 +13,8 @@ export type EstadoLibro = 'pendiente' | 'leyendo' | 'completado';
 
 export type NivelLibro = 'basico' | 'intermedio' | 'avanzado';
 
+export type CategoriaRuta = 'Frontend' | 'Backend' | 'Mobile' | 'Data Science' | 'General';
+
 export interface Libro {
   id: number;
   titulo: string;
@@ -22,6 +24,7 @@ export interface Libro {
   estado: EstadoLibro;
   notas: string;
   orden: number;
+  categoriaRuta: CategoriaRuta;
 }
 
 // Datos que llegan desde un formulario (sin id, ya que lo asigna SQLite).
@@ -37,6 +40,7 @@ interface FilaLibro {
   estado: EstadoLibro;
   notas: string;
   orden: number;
+  categoriaRuta?: string;
 }
 
 // Nombre del archivo físico de la base de datos en el dispositivo.
@@ -58,14 +62,35 @@ export async function obtenerConexion(): Promise<SQLite.SQLiteDatabase> {
   return conexion;
 }
 
+let inicializacionEnProgreso: Promise<void> | null = null;
+let inicializacionCompletada = false;
+
+/**
+ * Inicializa la base de datos de forma segura evitando condiciones de carrera.
+ */
+export function inicializarBaseDatos(): Promise<void> {
+  if (inicializacionCompletada) return Promise.resolve();
+  if (inicializacionEnProgreso) return inicializacionEnProgreso;
+
+  inicializacionEnProgreso = (async () => {
+    try {
+      await inicializarTablas();
+      inicializacionCompletada = true;
+    } finally {
+      inicializacionEnProgreso = null;
+    }
+  })();
+
+  return inicializacionEnProgreso;
+}
+
 /**
  * Inicializa la base de datos: activa claves foráneas,
  * crea la tabla `libros` si todavía no existe e inserta
  * una ruta de aprendizaje semilla la primera vez que se
- * arranca la app. Debe llamarse una sola vez, idealmente
- * en el _layout raíz antes de renderizar las pantallas.
+ * arranca la app.
  */
-export async function inicializarBaseDatos(): Promise<void> {
+async function inicializarTablas(): Promise<void> {
   const baseDatos = await obtenerConexion();
 
   // PRAGMA + DDL se ejecutan juntos con execAsync porque no
@@ -82,9 +107,18 @@ export async function inicializarBaseDatos(): Promise<void> {
       nivel TEXT NOT NULL CHECK (nivel IN ('basico', 'intermedio', 'avanzado')),
       estado TEXT NOT NULL CHECK (estado IN ('pendiente', 'leyendo', 'completado')),
       notas TEXT NOT NULL DEFAULT '',
-      orden INTEGER NOT NULL DEFAULT 0
+      orden INTEGER NOT NULL DEFAULT 0,
+      categoriaRuta TEXT NOT NULL DEFAULT 'General'
     );
   `);
+
+  try {
+    await baseDatos.execAsync(`
+      ALTER TABLE libros ADD COLUMN categoriaRuta TEXT NOT NULL DEFAULT 'General';
+    `);
+  } catch (e) {
+    // Ignorar si la columna ya existe
+  }
 
   await sembrarDatosIniciales(baseDatos);
 }
@@ -114,6 +148,7 @@ async function sembrarDatosIniciales(
       estado: 'completado',
       notas: 'Buena base del lenguaje antes de tocar frameworks.',
       orden: 1,
+      categoriaRuta: 'Frontend',
     },
     {
       titulo: 'You Don’t Know JS Yet',
@@ -123,6 +158,7 @@ async function sembrarDatosIniciales(
       estado: 'leyendo',
       notas: 'Profundiza en scope, closures y this.',
       orden: 2,
+      categoriaRuta: 'Frontend',
     },
     {
       titulo: 'Learning React Native',
@@ -131,7 +167,8 @@ async function sembrarDatosIniciales(
       nivel: 'intermedio',
       estado: 'pendiente',
       notas: 'Para arrancar con apps móviles multiplataforma.',
-      orden: 3,
+      orden: 1,
+      categoriaRuta: 'Mobile',
     },
     {
       titulo: 'Clean Code',
@@ -140,23 +177,25 @@ async function sembrarDatosIniciales(
       nivel: 'avanzado',
       estado: 'pendiente',
       notas: 'Lectura transversal a cualquier lenguaje.',
-      orden: 4,
+      orden: 1,
+      categoriaRuta: 'General',
     },
   ];
 
   for (const libro of librosSemilla) {
     await baseDatos.runAsync(
-      `INSERT INTO libros (titulo, autor, tecnologia, nivel, estado, notas, orden)
-       VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [
-        libro.titulo,
-        libro.autor,
-        libro.tecnologia,
-        libro.nivel,
-        libro.estado,
-        libro.notas,
-        libro.orden,
-      ],
+      `INSERT INTO libros (titulo, autor, tecnologia, nivel, estado, notas, orden, categoriaRuta)
+       VALUES ($titulo, $autor, $tecnologia, $nivel, $estado, $notas, $orden, $categoriaRuta);`,
+      {
+        $titulo: libro.titulo,
+        $autor: libro.autor,
+        $tecnologia: libro.tecnologia,
+        $nivel: libro.nivel,
+        $estado: libro.estado,
+        $notas: libro.notas,
+        $orden: libro.orden,
+        $categoriaRuta: libro.categoriaRuta,
+      },
     );
   }
 }
@@ -177,5 +216,6 @@ export function mapearFilaALibro(fila: FilaLibro): Libro {
     estado: fila.estado,
     notas: fila.notas ?? '',
     orden: fila.orden,
+    categoriaRuta: (fila.categoriaRuta as CategoriaRuta) ?? 'General',
   };
 }
